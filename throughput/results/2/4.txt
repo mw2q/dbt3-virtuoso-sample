@@ -1,0 +1,36 @@
+
+-- Line 6: SET AUTOCOMMIT MANUAL
+
+-- Line 10:
+select
+	o_orderpriority,
+	count(*) as order_count
+from
+	orders
+where
+	o_orderdate >= cast ('1993-03-01' as date)
+	and o_orderdate < dateadd ('month', 3, cast ('1993-03-01' as date))
+	and exists (
+		select
+			*
+		from
+			lineitem
+		where
+			l_orderkey = o_orderkey
+			and l_commitdate < l_receiptdate
+	)
+group by
+	o_orderpriority
+order by
+	o_orderpriority
+o_orderpriority   order_count
+VARCHAR NOT NULL  INTEGER NOT NULL
+_______________________________________________________________________________
+
+1-URGENT          12
+2-HIGH            10
+3-MEDIUM          13
+4-NOT SPECIFIED   9
+5-LOW             9
+
+-- Line 31: COMMIT WORK

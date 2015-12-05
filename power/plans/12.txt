@@ -1,0 +1,86 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	l_shipmode,
+	sum(case
+		when o_orderpriority = ''1-URGENT''
+			or o_orderpriority = ''2-HIGH''
+			then 1
+		else 0
+	end) as high_line_count,
+	sum(case
+		when o_orderpriority <> ''1-URGENT''
+			and o_orderpriority <> ''2-HIGH''
+			then 1
+		else 0
+	end) as low_line_count
+from
+	orders,
+	lineitem
+where
+	o_orderkey = l_orderkey
+	and l_shipmode in (''SHIP'', ''REG AIR'')
+	and l_commitdate < l_receiptdate
+	and l_shipdate < l_commitdate
+	and l_receiptdate >= cast (''1997-01-01'' as date)
+	and l_receiptdate < dateadd (''year'', 1, cast (''1997-01-01'' as date))
+group by
+	l_shipmode
+order by
+	l_shipmode;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ hash filler
+orders         1 rows(.o_orderkey, .o_orderpriority)
+ 
+Sort hf 35 (.o_orderkey) -> (.o_orderpriority)
+ 
+}
+{ fork
+{ fork
+lineitem        15 rows(.l_shipmode, .l_commitdate, .l_receiptdate, .l_shipdate, .l_orderkey)
+ l_receiptdate >= <tag 211 c 1997-01-01> < <tag 211 c 1998-01-01>
+hash partition+bloom by 39 ()
+END Node
+After test:
+      0: if (.l_commitdate < .l_receiptdate) then 4 else 18 unkn 18
+      4: if (.l_shipdate < .l_commitdate) then 8 else 18 unkn 18
+      8: one_of_these := Call one_of_these (.l_shipmode, <c SHIP>, <c REG AIR>)
+      13: if ( 0  < one_of_these) then 17 else 18 unkn 18
+      17: BReturn 1
+      18: BReturn 0
+Hash source 35        0.03 rows(k_.l_orderkey) -> (.o_orderpriority)
+ 
+Precode:
+      0: if (.o_orderpriority = <c 1-URGENT>) then 13 else 4 unkn 13
+      4: if (.o_orderpriority = <c 2-HIGH>) then 13 else 8 unkn 13
+      8: callretSearchedCASE :=  := artm  1 
+      12: Jump 17 (level=0)
+      13: callretSearchedCASE :=  := artm  0 
+      17: if (.o_orderpriority = <c 1-URGENT>) then 25 else 21 unkn 21
+      21: if (.o_orderpriority = <c 2-HIGH>) then 25 else 30 unkn 30
+      25: callretSearchedCASE :=  := artm  1 
+      29: Jump 34 (level=0)
+      30: callretSearchedCASE :=  := artm  0 
+      34: BReturn 0
+Sort (.l_shipmode) -> (callretSearchedCASE, callretSearchedCASE)
+ 
+}
+group by read node  
+(.l_shipmode, low_line_count, high_line_count)
+Sort (.l_shipmode) -> (high_line_count, low_line_count)
+ 
+}
+Key from temp (.l_shipmode, high_line_count, low_line_count)
+ 
+Select (.l_shipmode, high_line_count, low_line_count)
+}

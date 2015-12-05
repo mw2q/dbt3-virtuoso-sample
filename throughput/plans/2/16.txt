@@ -1,0 +1,100 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select 
+	s_name,
+	s_address
+from
+	supplier,
+	nation
+where
+	s_suppkey in (
+		select
+			ps_suppkey
+		from
+			partsupp
+		where
+			ps_partkey in (
+				select
+					p_partkey
+				from
+					part
+				where
+					p_name like ''cornflower%''
+			)
+			and ps_availqty > (
+				select
+					0.5 * sum(l_quantity)
+				from
+					lineitem
+				where
+					l_partkey = ps_partkey
+					and l_suppkey = ps_suppkey
+					and l_shipdate >= cast (''1994-01-01'' as date)
+					and l_shipdate < dateadd (''year'', 1, cast (''1994-01-01'' as date))
+			)
+	)
+	and s_nationkey = n_nationkey
+	and n_name = ''RUSSIA''
+order by
+	s_name;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+nation         1 rows(.n_nationkey)
+ n_name = <c RUSSIA>
+supplier     0.029 rows(.s_suppkey, .s_name, .s_address)
+ s_nationkey = .n_nationkey
+END Node
+After test:
+      0: if ({ 
+partsupp      0.59 rows(.ps_partkey, .ps_availqty, .ps_suppkey)
+ ps_suppkey = k_.s_suppkey
+END Node
+After test:
+      0: { 
+{ fork
+lineitem     1e+03 rows(.l_quantity)
+ l_shipdate >= <tag 211 c 1994-01-01> < <tag 211 c 1995-01-01> ,  l_suppkey = k_.ps_suppkey ,  l_partkey = k_.ps_partkey
+ 
+After code:
+      0:  sum sum.l_quantityset no set_ctr
+      5: BReturn 0
+}
+ 
+After code:
+      0: temp := artm  0.5  * sum
+      4: aggregate :=  := artm temp
+      8: BReturn 0
+Subquery Select(aggregate)
+}
+ 
+      8: if (.ps_availqty > scalar) then 12 else 17 unkn 17
+      12: if ({ 
+part unq         1 rows ()
+ inlined  p_partkey = k_.ps_partkey p_name LIKE <c cornflower%>
+Subquery Select( <none> )
+}
+) then 16 else 17 unkn 17
+      16: BReturn 1
+      17: BReturn 0
+Subquery Select( <none> )
+}
+) then 4 else 5 unkn 5
+      4: BReturn 1
+      5: BReturn 0
+Sort (.s_name) -> (.s_address)
+ 
+}
+Key from temp (.s_name, .s_address)
+ 
+Select (.s_name, .s_address)
+}

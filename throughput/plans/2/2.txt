@@ -1,0 +1,130 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	o_year,
+	sum(case
+		when nation = ''KENYA'' then volume
+		else 0
+	end) / sum(volume) as mkt_share
+from
+	(
+		select
+			extract(year from o_orderdate) as o_year,
+			l_extendedprice * (1 - l_discount) as volume,
+			n2.n_name as nation
+		from
+			part,
+			supplier,
+			lineitem,
+			orders,
+			customer,
+			nation n1,
+			nation n2,
+			region
+		where
+			p_partkey = l_partkey
+			and s_suppkey = l_suppkey
+			and l_orderkey = o_orderkey
+			and o_custkey = c_custkey
+			and c_nationkey = n1.n_nationkey
+			and n1.n_regionkey = r_regionkey
+			and r_name = ''AFRICA''
+			and s_nationkey = n2.n_nationkey
+			and o_orderdate between cast (''1995-01-01'' as date) and cast (''1996-12-31'' as date)
+			and p_type = ''MEDIUM PLATED STEEL''
+	) as all_nations
+group by
+	o_year
+order by
+	o_year;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ hash filler
+nation        25 rows(t8.n_nationkey, t8.n_name)
+ 
+Sort hf 35 (t8.n_nationkey) -> (t8.n_name)
+ 
+}
+{ hash filler
+part         1 rows(t2.p_partkey)
+ p_type = <c MEDIUM PLATED STEEL>
+Sort hf 48 (t2.p_partkey)
+}
+{ hash filler
+supplier         1 rows(t3.s_suppkey, t3.s_nationkey)
+ 
+Sort hf 62 (t3.s_suppkey) -> (t3.s_nationkey)
+ 
+}
+{ hash filler
+Subquery 68 
+{ 
+customer         1 rows(t15.c_nationkey, t15.c_custkey)
+ 
+nation unq         1 rows (t16.n_regionkey)
+ inlined  n_nationkey = t15.c_nationkey
+region unq       0.2 rows ()
+ inlined  r_regionkey = t16.n_regionkey r_name = <c AFRICA>
+ 
+After code:
+      0: t15.c_custkey :=  := artm t15.c_custkey
+      4: BReturn 0
+Sort hf 91 (t15.c_custkey)
+}
+}
+{ fork
+{ fork
+orders   4.4e+02 rows(t5.o_custkey, t5.o_orderkey, t5.o_orderdate)
+ o_orderdate >= <tag 211 c 1995-01-01> <= <tag 211 c 1996-12-31>
+hash partition+bloom by 104 (tmp)hash join merged always card       0.2 -> ()
+Hash source 91 merged into ts        0.2 rows(t5.o_custkey) -> ()
+ 
+Precode:
+      0: o_year := Call __extract (<c year>, t5.o_orderdate)
+      5: BReturn 0
+lineitem       5.6 rows(t4.l_partkey, t4.l_suppkey, t4.l_extendedprice, t4.l_discount)
+ inlined  l_orderkey = t5.o_orderkey
+hash partition+bloom by 52 (tmp)hash join merged always card         1 -> ()
+hash partition+bloom by 66 (tmp)hash join merged always card         1 -> (t3.s_nationkey)
+ 
+Precode:
+      0: temp := artm  1  - t4.l_discount
+      4: temp := artm t4.l_extendedprice * temp
+      8: BReturn 0
+Hash source 62 merged into ts          1 rows(t4.l_suppkey) -> (t3.s_nationkey)
+Hash source 48 merged into ts          1 rows(t4.l_partkey) -> ()
+Hash source 35           1 rows(t3.s_nationkey) -> (t8.n_name)
+ 
+Precode:
+      0: if (t8.n_name = <c KENYA>) then 4 else 17 unkn 17
+      4: temp := artm  1  - t4.l_discount
+      8: temp := artm t4.l_extendedprice * temp
+      12: callretSearchedCASE :=  := artm temp
+      16: Jump 21 (level=0)
+      17: callretSearchedCASE :=  := artm  0 
+      21: BReturn 0
+Sort (o_year) -> (temp, callretSearchedCASE)
+ 
+}
+group by read node  
+(o_year, aggregate, aggregate)
+ 
+Precode:
+      0: mkt_share := artm aggregate / aggregate
+      4: BReturn 0
+Sort (o_year) -> (mkt_share)
+ 
+}
+Key from temp (o_year, mkt_share)
+ 
+Select (o_year, mkt_share)
+}

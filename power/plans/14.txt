@@ -1,0 +1,52 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	100.00 * sum(case
+		when p_type like ''PROMO%''
+			then l_extendedprice * (1 - l_discount)
+		else 0
+	end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
+from
+	lineitem,
+	part
+where
+	l_partkey = p_partkey
+	and l_shipdate >= cast (''1993-04-01'' as date)
+	and l_shipdate < dateadd (''month'', 1, cast (''1993-04-01'' as date));
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+part         1 rows(.p_partkey, .p_type)
+ 
+lineitem         1 rows(.l_extendedprice, .l_discount)
+ l_shipdate >= <tag 211 c 1993-04-01> < <tag 211 c 1993-05-01> ,  l_partkey = .p_partkey
+ 
+After code:
+      0: temp := artm  1  - .l_discount
+      4: temp := artm .l_extendedprice * temp
+      8: if (.p_type  LIKE  <c PROMO%>) then 12 else 25 unkn 25
+      12: temp := artm  1  - .l_discount
+      16: temp := artm .l_extendedprice * temp
+      20: callretSearchedCASE :=  := artm temp
+      24: Jump 29 (level=0)
+      25: callretSearchedCASE :=  := artm  0 
+      29:  sum sumtempset no set_ctr
+      34:  sum sumcallretSearchedCASEset no set_ctr
+      39: BReturn 0
+}
+ 
+After code:
+      0: temp := artm  100  * sum
+      4: promo_revenue := artm temp / sum
+      8: BReturn 0
+Select (promo_revenue)
+}

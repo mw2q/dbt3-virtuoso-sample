@@ -1,0 +1,111 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	sum(l_extendedprice* (1 - l_discount)) as revenue
+from
+	lineitem,
+	part
+where
+	(
+		p_partkey = l_partkey
+		and p_brand = ''Brand#11''
+		and p_container in (''SM CASE'', ''SM BOX'', ''SM PACK'', ''SM PKG'')
+		and l_quantity >= 3 and l_quantity <= 3 + 10
+		and p_size between 1 and 5
+		and l_shipmode in (''AIR'', ''AIR REG'')
+		and l_shipinstruct = ''DELIVER IN PERSON''
+	)
+	or
+	(
+		p_partkey = l_partkey
+		and p_brand = ''Brand#25''
+		and p_container in (''MED BAG'', ''MED BOX'', ''MED PKG'', ''MED PACK'')
+		and l_quantity >= 16 and l_quantity <= 16 + 10
+		and p_size between 1 and 10
+		and l_shipmode in (''AIR'', ''AIR REG'')
+		and l_shipinstruct = ''DELIVER IN PERSON''
+	)
+	or
+	(
+		p_partkey = l_partkey
+		and p_brand = ''Brand#45''
+		and p_container in (''LG CASE'', ''LG BOX'', ''LG PACK'', ''LG PKG'')
+		and l_quantity >= 20 and l_quantity <= 20 + 10
+		and p_size between 1 and 15
+		and l_shipmode in (''AIR'', ''AIR REG'')
+		and l_shipinstruct = ''DELIVER IN PERSON''
+	);
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+ 
+Precode:
+      0: temp := artm  3  +  10 
+      4: temp := artm  16  +  10 
+      8: temp := artm  20  +  10 
+      12: BReturn 0
+{ hash filler
+part         1 rows(.p_brand, .p_container, .p_size, .p_partkey)
+ p_size >=  1 
+Sort hf 43 (.p_partkey) -> (.p_size, .p_container, .p_brand)
+ 
+}
+{ fork
+lineitem   1.4e+03 rows(.l_shipmode, .l_quantity, .l_partkey, .l_extendedprice, .l_discount)
+ l_shipinstruct = <c DELIVER IN PERSON>
+hash partition+bloom by 47 (tmp)hash join merged always card       1.2 -> (.p_size, .p_container, .p_brand)
+END Node
+After test:
+      0: if (.l_quantity <= temp) then 4 else 8 unkn 8
+      4: if (.l_quantity >=  3 ) then 24 else 8 unkn 8
+      8: if (.l_quantity <= temp) then 12 else 16 unkn 16
+      12: if ( 16  <= .l_quantity) then 24 else 16 unkn 16
+      16: if (temp >= .l_quantity) then 20 else 34 unkn 34
+      20: if (.l_quantity >=  20 ) then 24 else 34 unkn 34
+      24: one_of_these := Call one_of_these (.l_shipmode, <c AIR>, <c AIR REG>)
+      29: if ( 0  < one_of_these) then 33 else 34 unkn 34
+      33: BReturn 1
+      34: BReturn 0
+ 
+Precode:
+      0: temp := artm  1  - .l_discount
+      4: temp := artm .l_extendedprice * temp
+      8: BReturn 0
+Hash source 43 merged into ts        1.2 rows(k_.l_partkey) -> (.p_size, .p_container, .p_brand)
+END Node
+After test:
+      0: if (.p_brand = <c Brand#25>) then 4 else 25 unkn 25
+      4: if ( 16  <= .l_quantity) then 8 else 25 unkn 25
+      8: if (.l_quantity <= temp) then 12 else 25 unkn 25
+      12: if (.p_size <=  10 ) then 16 else 25 unkn 25
+      16: one_of_these := Call one_of_these (.p_container, <c MED BAG>, <c MED BOX>, <c MED PKG>, <c MED PACK>)
+      21: if ( 0  < one_of_these) then 75 else 25 unkn 25
+      25: if (.p_brand = <c Brand#45>) then 29 else 50 unkn 50
+      29: if (.l_quantity >=  20 ) then 33 else 50 unkn 50
+      33: if (temp >= .l_quantity) then 37 else 50 unkn 50
+      37: if (.p_size <=  15 ) then 41 else 50 unkn 50
+      41: one_of_these := Call one_of_these (.p_container, <c LG CASE>, <c LG BOX>, <c LG PACK>, <c LG PKG>)
+      46: if ( 0  < one_of_these) then 75 else 50 unkn 50
+      50: if (.p_size <=  5 ) then 54 else 76 unkn 76
+      54: if (.p_brand = <c Brand#11>) then 58 else 76 unkn 76
+      58: if (.l_quantity >=  3 ) then 62 else 76 unkn 76
+      62: if (.l_quantity <= temp) then 66 else 76 unkn 76
+      66: one_of_these := Call one_of_these (.p_container, <c SM CASE>, <c SM BOX>, <c SM PACK>, <c SM PKG>)
+      71: if ( 0  < one_of_these) then 75 else 76 unkn 76
+      75: BReturn 1
+      76: BReturn 0
+ 
+After code:
+      0:  sum revenuetempset no set_ctr
+      5: BReturn 0
+}
+Select (revenue)
+}

@@ -1,0 +1,86 @@
+/usr/local/bin/dbt3-generate-report: line 760: dbt-virtuoso-plot-database-stats: command not found
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+3: In max(df$pswpin.s) : no non-missing arguments to max; returning -Inf
+4: In max(df$pswpout.s) : no non-missing arguments to max; returning -Inf
+Execution halted
+/usr/local/bin/dbt3-generate-report: line 760: dbt-virtuoso-plot-database-stats: command not found
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+3: In max(df$pswpin.s) : no non-missing arguments to max; returning -Inf
+4: In max(df$pswpout.s) : no non-missing arguments to max; returning -Inf
+Execution halted
+/usr/local/bin/dbt3-generate-report: line 760: dbt-virtuoso-plot-database-stats: command not found
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+Execution halted
+Error in plot.window(...) : need finite 'xlim' values
+Calls: plot -> plot.default -> localWindow -> plot.window
+In addition: Warning messages:
+1: In min(x) : no non-missing arguments to min; returning Inf
+2: In max(x) : no non-missing arguments to max; returning -Inf
+3: In max(df$pswpin.s) : no non-missing arguments to max; returning -Inf
+4: In max(df$pswpout.s) : no non-missing arguments to max; returning -Inf
+Execution halted
+Warning messages:
+1: In `[<-.factor`(`*tmp*`, ri, value = c(0, 0, 0, 0, 0, 0, 0, 0, 0,  :
+  invalid factor level, NA generated
+2: In `[<-.factor`(`*tmp*`, ri, value = c(0, 0, 0, 0, 0, 0, 0, 0, 0,  :
+  invalid factor level, NA generated

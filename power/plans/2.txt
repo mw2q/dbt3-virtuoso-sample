@@ -1,0 +1,101 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+    TOP 100
+    	s_acctbal,
+	s_name,
+	n_name,
+	p_partkey,
+	p_mfgr,
+	s_address,
+	s_phone,
+	s_comment
+from
+	part,
+	supplier,
+	partsupp,
+	nation,
+	region
+where
+	p_partkey = ps_partkey
+	and s_suppkey = ps_suppkey
+	and p_size = 43
+	and p_type like ''%NICKEL''
+	and s_nationkey = n_nationkey
+	and n_regionkey = r_regionkey
+	and r_name = ''MIDDLE EAST''
+	and ps_supplycost = (
+		select
+			min(ps_supplycost)
+		from
+			partsupp,
+			supplier,
+			nation,
+			region
+		where
+			p_partkey = ps_partkey
+			and s_suppkey = ps_suppkey
+			and s_nationkey = n_nationkey
+			and n_regionkey = r_regionkey
+			and r_name = ''MIDDLE EAST''
+	)
+order by
+	s_acctbal desc,
+	n_name,
+	s_name,
+	p_partkey;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+region         1 rows(.r_regionkey)
+ r_name = <c MIDDLE EAST>
+nation       6.2 rows(.n_nationkey, .n_name)
+ n_regionkey = .r_regionkey
+supplier     0.042 rows(.s_suppkey, .s_acctbal, .s_name, .s_address, .s_phone, .s_comment)
+ s_nationkey = .n_nationkey
+partsupp         1 rows(.ps_partkey, .ps_supplycost)
+ ps_suppkey = .s_suppkey
+part unq         1 rows (.p_partkey, .p_mfgr)
+ inlined  p_partkey = .ps_partkey p_type LIKE <c %NICKEL> ,  p_size =  43 
+END Node
+After test:
+      0: { 
+{ fork
+supplier         1 rows(.s_suppkey, .s_nationkey)
+ 
+partsupp unq         1 rows (.ps_supplycost)
+ inlined  ps_partkey = k_.p_partkey ,  ps_suppkey = .s_suppkey
+nation unq         1 rows (.n_regionkey)
+ inlined  n_nationkey = k_.s_nationkey
+region unq       0.2 rows ()
+ inlined  r_regionkey = .n_regionkey r_name = <c MIDDLE EAST>
+ 
+After code:
+      0:  min min.ps_supplycostset no set_ctr
+      5: BReturn 0
+}
+ 
+After code:
+      0: aggregate :=  := artm min
+      4: BReturn 0
+Subquery Select(aggregate)
+}
+ 
+      8: if (.ps_supplycost = scalar) then 12 else 13 unkn 13
+      12: BReturn 1
+      13: BReturn 0
+Sort (.s_acctbal, .n_name, .s_name, .p_partkey) -> (.p_mfgr, .s_address, .s_phone, .s_comment)
+ 
+}
+top order by read (.s_acctbal, .s_name, .n_name, .p_partkey, .p_mfgr, .s_address, .s_phone, .s_comment)
+Select (.s_acctbal, .s_name, .n_name, .p_partkey, .p_mfgr, .s_address, .s_phone, .s_comment)
+}

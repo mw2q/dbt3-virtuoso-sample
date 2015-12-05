@@ -1,0 +1,101 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+    TOP 100
+    	s_name,
+	count(*) as numwait
+from
+	supplier,
+	lineitem l1,
+	orders,
+	nation
+where
+	s_suppkey = l1.l_suppkey
+	and o_orderkey = l1.l_orderkey
+	and o_orderstatus = ''F''
+	and l1.l_receiptdate > l1.l_commitdate
+	and exists (
+		select
+			*
+		from
+			lineitem l2 
+		where
+			l2.l_orderkey = l1.l_orderkey
+			and l2.l_suppkey <> l1.l_suppkey
+	)
+	and not exists (
+		select
+			*
+		from
+			lineitem l3 
+		where
+			l3.l_orderkey = l1.l_orderkey
+			and l3.l_suppkey <> l1.l_suppkey
+			and l3.l_receiptdate > l3.l_commitdate
+	)
+	and s_nationkey = n_nationkey
+	and n_name = ''JORDAN''
+group by
+	s_name
+order by
+	numwait desc,
+	s_name;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+{ fork
+supplier         1 rows(.s_nationkey, .s_suppkey, .s_name)
+ 
+nation unq      0.04 rows ()
+ inlined  n_nationkey = .s_nationkey n_name = <c JORDAN>
+orders   7.6e+02 rows(.o_orderkey)
+ o_orderstatus = <c F>
+lineitem       2.6 rows(l1.l_receiptdate, l1.l_commitdate, l1.l_orderkey, l1.l_suppkey)
+ inlined  l_orderkey = .o_orderkey l_suppkey = k_.s_suppkey
+END Node
+After test:
+      0: if (l1.l_receiptdate > l1.l_commitdate) then 4 else 13 unkn 13
+      4: if ({ 
+lineitem       3.8 rows(l3.l_suppkey, l3.l_receiptdate, l3.l_commitdate)
+ inlined  l_orderkey = k_l1.l_orderkey
+END Node
+After test:
+      0: if (l3.l_receiptdate > l3.l_commitdate) then 4 else 9 unkn 9
+      4: if (l3.l_suppkey = l1.l_suppkey) then 9 else 8 unkn 9
+      8: BReturn 1
+      9: BReturn 0
+Subquery Select( <none> )
+}
+) then 13 else 8 unkn 13
+      8: if ({ 
+lineitem       5.5 rows(l2.l_suppkey)
+ inlined  l_orderkey = k_l1.l_orderkey
+END Node
+After test:
+      0: if (l2.l_suppkey = l1.l_suppkey) then 5 else 4 unkn 5
+      4: BReturn 1
+      5: BReturn 0
+Subquery Select( <none> )
+}
+) then 12 else 13 unkn 13
+      12: BReturn 1
+      13: BReturn 0
+Sort (.s_name) -> (inc)
+ 
+}
+group by read node  
+(.s_name, numwait)
+Sort (numwait, .s_name)
+}
+top order by read (.s_name, numwait)
+Select (.s_name, numwait)
+}

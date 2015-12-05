@@ -1,0 +1,8 @@
+Sat Dec  5 18:36:23 CET 2015: Stream 2 : Starting Refresh Stream 2...
+count
+INTEGER
+_______________________________________________________________________________
+
+1500
+Sat Dec  5 18:36:23 CET 2015: Stream 2 : Refresh Stream 2 completed.
+Stream 2 : Elapsed time for Refresh Stream 2 : 0 seconds

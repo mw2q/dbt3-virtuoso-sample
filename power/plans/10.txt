@@ -1,0 +1,100 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+    TOP 20
+    	c_custkey,
+	c_name,
+	sum(l_extendedprice * (1 - l_discount)) as revenue,
+	c_acctbal,
+	n_name,
+	c_address,
+	c_phone,
+	c_comment
+from
+	customer,
+	orders,
+	lineitem,
+	nation
+where
+	c_custkey = o_custkey
+	and l_orderkey = o_orderkey
+	and o_orderdate >= cast (''1994-09-01'' as date)
+	and o_orderdate < dateadd (''month'', 3, cast (''1994-09-01'' as date))
+	and l_returnflag = ''R''
+	and c_nationkey = n_nationkey
+group by
+	c_custkey,
+	c_name,
+	c_acctbal,
+	c_phone,
+	n_name,
+	c_address,
+	c_comment
+order by
+	revenue desc;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ hash filler
+lineitem         1 rows(.l_orderkey, .l_extendedprice, .l_discount)
+ l_returnflag = <c R>
+Sort hf 36 (.l_orderkey) -> (.l_discount, .l_extendedprice)
+ 
+}
+{ hash filler
+Subquery 42 
+{ 
+customer         1 rows(t1.c_nationkey, t1.c_custkey, t1.c_name, t1.c_acctbal, t1.c_phone, t1.c_address, t1.c_comment)
+ 
+nation unq         1 rows (t4.n_name)
+ inlined  n_nationkey = t1.c_nationkey
+ 
+After code:
+      0: t1.c_custkey :=  := artm t1.c_custkey
+      4: t1.c_name :=  := artm t1.c_name
+      8: t1.c_acctbal :=  := artm t1.c_acctbal
+      12: t1.c_phone :=  := artm t1.c_phone
+      16: t4.n_name :=  := artm t4.n_name
+      20: t1.c_address :=  := artm t1.c_address
+      24: t1.c_comment :=  := artm t1.c_comment
+      28: BReturn 0
+Sort hf 74 (t1.c_custkey) -> (t1.c_name, t1.c_acctbal, t1.c_phone, t4.n_name, t1.c_address, t1.c_comment)
+ 
+}
+}
+{ fork
+{ fork
+orders         1 rows(.o_orderkey, .o_custkey)
+ o_orderdate >= <tag 211 c 1994-09-01> < <tag 211 c 1994-12-01>
+hash partition+bloom by 40 ()
+hash partition+bloom by 84 (tmp)hash join merged always card        -1 -> (.c_name, .c_acctbal, .c_phone, .n_name, .c_address, .c_comment)
+ 
+Precode:
+      0: .c_custkey :=  := artm .o_custkey
+      4: BReturn 0
+Hash source 74 merged into ts         -1 rows(.o_custkey) -> (.c_name, .c_acctbal, .c_phone, .n_name, .c_address, .c_comment)
+Hash source 36          -1 rows(.o_orderkey) -> (.l_discount, .l_extendedprice)
+ 
+Precode:
+      0: temp := artm  1  - .l_discount
+      4: temp := artm .l_extendedprice * temp
+      8: BReturn 0
+Sort (.c_custkey, .c_name, .c_acctbal, .c_phone, .n_name, .c_address, .c_comment) -> (temp)
+ 
+}
+group by read node  
+(.c_custkey, .c_name, .c_acctbal, .c_phone, .n_name, .c_address, .c_comment, revenue)
+Sort (revenue) -> (.c_custkey, .c_name, .c_acctbal, .n_name, .c_address, .c_phone, .c_comment)
+ 
+}
+top order by read (.c_custkey, .c_name, revenue, .c_acctbal, .n_name, .c_address, .c_phone, .c_comment)
+Select (.c_custkey, .c_name, revenue, .c_acctbal, .n_name, .c_address, .c_phone, .c_comment)
+}

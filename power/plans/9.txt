@@ -1,0 +1,85 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	nation,
+	o_year,
+	sum(amount) as sum_profit
+from
+	(
+		select
+			n_name as nation,
+			extract(year from o_orderdate) as o_year,
+			l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
+		from
+			part,
+			supplier,
+			lineitem,
+			partsupp,
+			orders,
+			nation
+		where
+			s_suppkey = l_suppkey
+			and ps_suppkey = l_suppkey
+			and ps_partkey = l_partkey
+			and p_partkey = l_partkey
+			and o_orderkey = l_orderkey
+			and s_nationkey = n_nationkey
+			and p_name like ''%midnight%''
+	) as profit
+group by
+	nation,
+	o_year
+order by
+	nation,
+	o_year desc;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+{ fork
+part         1 rows(t2.p_partkey)
+ p_name LIKE <c %midnight%>
+lineitem         6 rows(t4.l_orderkey, t4.l_suppkey, t4.l_partkey, t4.l_extendedprice, t4.l_discount, t4.l_quantity)
+ l_partkey = t2.p_partkey
+ 
+Precode:
+      0: temp := artm  1  - t4.l_discount
+      4: temp := artm t4.l_extendedprice * temp
+      8: BReturn 0
+orders unq      0.03 rows (t6.o_orderdate)
+ inlined  o_orderkey = t4.l_orderkey
+partsupp unq         1 rows (t5.ps_supplycost)
+ inlined  ps_partkey = k_t4.l_partkey ,  ps_suppkey = k_t4.l_suppkey
+ 
+Precode:
+      0: temp := artm t5.ps_supplycost * t4.l_quantity
+      4: temp := artm temp - temp
+      8: BReturn 0
+supplier unq         1 rows (t3.s_nationkey)
+ inlined  s_suppkey = k_t4.l_suppkey
+nation unq         1 rows (nation)
+ inlined  n_nationkey = t3.s_nationkey
+ 
+After code:
+      0: o_year := Call __extract (<c year>, t6.o_orderdate)
+      5: BReturn 0
+Sort (nation, o_year) -> (temp)
+ 
+}
+group by read node  
+(nation, o_year, sum_profit)
+Sort (nation, o_year) -> (sum_profit)
+ 
+}
+Key from temp (nation, o_year, sum_profit)
+ 
+Select (nation, o_year, sum_profit)
+}

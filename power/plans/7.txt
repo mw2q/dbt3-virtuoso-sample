@@ -1,0 +1,109 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	supp_nation,
+	cust_nation,
+	l_year,
+	sum(volume) as revenue
+from
+	(
+		select
+			n1.n_name as supp_nation,
+			n2.n_name as cust_nation,
+			extract(year from l_shipdate) as l_year,
+			l_extendedprice * (1 - l_discount) as volume
+		from
+			supplier,
+			lineitem,
+			orders,
+			customer,
+			nation n1,
+			nation n2
+		where
+			s_suppkey = l_suppkey
+			and o_orderkey = l_orderkey
+			and c_custkey = o_custkey
+			and s_nationkey = n1.n_nationkey
+			and c_nationkey = n2.n_nationkey
+			and (
+				(n1.n_name = ''ROMANIA'' and n2.n_name = ''ETHIOPIA'')
+				or (n1.n_name = ''ETHIOPIA'' and n2.n_name = ''ROMANIA'')
+			)
+			and l_shipdate between cast (''1995-01-01'' as date) and cast (''1996-12-31'' as date)
+	) as shipping
+group by
+	supp_nation,
+	cust_nation,
+	l_year
+order by
+	supp_nation,
+	cust_nation,
+	l_year;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ hash filler
+Subquery 27 
+{ 
+customer         1 rows(t12.c_custkey, t12.c_nationkey)
+ 
+orders      0.03 rows(t11.o_orderkey)
+ o_custkey = t12.c_custkey
+nation unq         1 rows (t14.n_name)
+ inlined  n_nationkey = k_t12.c_nationkey
+ 
+After code:
+      0: t11.o_orderkey :=  := artm t11.o_orderkey
+      4: t14.n_name :=  := artm t14.n_name
+      8: BReturn 0
+Sort hf 52 (t11.o_orderkey) -> (t14.n_name)
+ 
+}
+}
+{ fork
+{ fork
+lineitem         6 rows(t3.l_orderkey, t3.l_suppkey, t3.l_shipdate, t3.l_extendedprice, t3.l_discount)
+ l_shipdate >= <tag 211 c 1995-01-01> <= <tag 211 c 1996-12-31>
+hash partition+bloom by 65 ()
+ 
+Precode:
+      0: temp := artm  1  - t3.l_discount
+      4: temp := artm t3.l_extendedprice * temp
+      8: BReturn 0
+Hash source 52      0.0009 rows(t3.l_orderkey) -> (cust_nation)
+supplier unq         1 rows (t2.s_nationkey)
+ inlined  s_suppkey = k_t3.l_suppkey
+nation unq      0.36 rows (supp_nation)
+ inlined  n_nationkey = t2.s_nationkey
+END Node
+After test:
+      0: if (supp_nation = <c ROMANIA>) then 4 else 8 unkn 8
+      4: if (cust_nation = <c ETHIOPIA>) then 16 else 8 unkn 8
+      8: if (supp_nation = <c ETHIOPIA>) then 12 else 17 unkn 17
+      12: if (cust_nation = <c ROMANIA>) then 16 else 17 unkn 17
+      16: BReturn 1
+      17: BReturn 0
+ 
+Precode:
+      0: l_year := Call __extract (<c year>, t3.l_shipdate)
+      5: BReturn 0
+Sort (supp_nation, cust_nation, l_year) -> (temp)
+ 
+}
+group by read node  
+(supp_nation, cust_nation, l_year, revenue)
+Sort (supp_nation, cust_nation, l_year) -> (revenue)
+ 
+}
+Key from temp (supp_nation, cust_nation, l_year, revenue)
+ 
+Select (supp_nation, cust_nation, l_year, revenue)
+}

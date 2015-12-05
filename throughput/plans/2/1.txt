@@ -1,0 +1,66 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	l_returnflag,
+	l_linestatus,
+	sum(l_quantity) as sum_qty,
+	sum(l_extendedprice) as sum_base_price,
+	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+	avg(l_quantity) as avg_qty,
+	avg(l_extendedprice) as avg_price,
+	avg(l_discount) as avg_disc,
+	count(*) as count_order
+from
+	lineitem
+where
+	l_shipdate <= dateadd(''DAY'', -96, cast (''1998-12-01'' as date))
+group by
+	l_returnflag,
+	l_linestatus
+order by
+	l_returnflag,
+	l_linestatus;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+{ fork
+lineitem   1.7e+03 rows(.l_returnflag, .l_linestatus, .l_discount, .l_extendedprice, .l_quantity, .l_tax)
+ l_shipdate <= <tag 211 c 1998-08-27>
+ 
+After code:
+      0: isnotnull := Call isnotnull (.l_discount)
+      5: isnotnull := Call isnotnull (.l_extendedprice)
+      10: isnotnull := Call isnotnull (.l_quantity)
+      15: temp := artm  1  - .l_discount
+      19: temp := artm .l_extendedprice * temp
+      23: temp := artm  1  + .l_tax
+      27: temp := artm temp * temp
+      31: BReturn 0
+Sort (.l_returnflag, .l_linestatus) -> (inc, isnotnull, .l_discount, isnotnull, .l_extendedprice, isnotnull, .l_quantity, temp, temp, .l_extendedprice, .l_quantity)
+ 
+}
+group by read node  
+(.l_returnflag, .l_linestatus, count_order, aggregate, aggregate, aggregate, aggregate, aggregate, aggregate, sum_charge, sum_disc_price, sum_base_price, sum_qty)
+ 
+Precode:
+      0: avg_qty := artm aggregate / aggregate
+      4: avg_price := artm aggregate / aggregate
+      8: avg_disc := artm aggregate / aggregate
+      12: BReturn 0
+Sort (.l_returnflag, .l_linestatus) -> (sum_qty, sum_base_price, sum_disc_price, sum_charge, avg_qty, avg_price, avg_disc, count_order)
+ 
+}
+Key from temp (.l_returnflag, .l_linestatus, sum_qty, sum_base_price, sum_disc_price, sum_charge, avg_qty, avg_price, avg_disc, count_order)
+ 
+Select (.l_returnflag, .l_linestatus, sum_qty, sum_base_price, sum_disc_price, sum_charge, avg_qty, avg_price, avg_disc, count_order)
+}

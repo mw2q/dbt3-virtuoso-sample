@@ -1,0 +1,47 @@
+
+-- Line 6: SET AUTOCOMMIT MANUAL
+
+-- Line 10:
+select
+	cntrycode,
+	count(*) as numcust,
+	sum(c_acctbal) as totacctbal
+from
+	(
+		select
+			substring(c_phone, 1, 2) as cntrycode,
+			c_acctbal
+		from
+			customer
+		where
+			substring(c_phone, 1, 2) in
+				('17', '29', '34', '11', '24', '22', '13')
+			and c_acctbal > (
+				select
+					avg(c_acctbal)
+				from
+					customer
+				where
+					c_acctbal > 0.00
+					and substring(c_phone, 1, 2) in
+						('17', '29', '34', '11', '24', '22', '13')
+			)
+			and not exists (
+				select
+					*
+				from
+					orders
+				where
+					o_custkey = c_custkey
+			)
+	) as custsale
+group by
+	cntrycode
+order by
+	cntrycode
+cntrycode                                                                         numcust           totacctbal
+VARCHAR                                                                           INTEGER NOT NULL  DOUBLE PRECISION NOT NULL
+_______________________________________________________________________________
+
+
+-- Line 47: COMMIT WORK

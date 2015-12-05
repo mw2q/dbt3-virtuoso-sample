@@ -1,0 +1,71 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+    TOP 20
+    	c_custkey,
+	c_name,
+	sum(l_extendedprice * (1 - l_discount)) as revenue,
+	c_acctbal,
+	n_name,
+	c_address,
+	c_phone,
+	c_comment
+from
+	customer,
+	orders,
+	lineitem,
+	nation
+where
+	c_custkey = o_custkey
+	and l_orderkey = o_orderkey
+	and o_orderdate >= cast (''1994-03-01'' as date)
+	and o_orderdate < dateadd (''month'', 3, cast (''1994-03-01'' as date))
+	and l_returnflag = ''R''
+	and c_nationkey = n_nationkey
+group by
+	c_custkey,
+	c_name,
+	c_acctbal,
+	c_phone,
+	n_name,
+	c_address,
+	c_comment
+order by
+	revenue desc;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+{ fork
+nation        25 rows(.n_nationkey, .n_name)
+ 
+customer     0.042 rows(.c_custkey, .c_name, .c_acctbal, .c_phone, .c_address, .c_comment)
+ c_nationkey = .n_nationkey
+orders        64 rows(.o_orderkey)
+ o_orderdate >= <tag 211 c 1994-03-01> < <tag 211 c 1994-06-01> ,  o_custkey = .c_custkey
+lineitem       1.4 rows(.l_extendedprice, .l_discount)
+ inlined  l_orderkey = .o_orderkey l_returnflag = <c R>
+ 
+After code:
+      0: temp := artm  1  - .l_discount
+      4: temp := artm .l_extendedprice * temp
+      8: BReturn 0
+Sort (.c_custkey, .c_name, .c_acctbal, .c_phone, .n_name, .c_address, .c_comment) -> (temp)
+ 
+}
+group by read node  
+(.c_custkey, .c_name, .c_acctbal, .c_phone, .n_name, .c_address, .c_comment, revenue)
+Sort (revenue) -> (.c_custkey, .c_name, .c_acctbal, .n_name, .c_address, .c_phone, .c_comment)
+ 
+}
+top order by read (.c_custkey, .c_name, revenue, .c_acctbal, .n_name, .c_address, .c_phone, .c_comment)
+Select (.c_custkey, .c_name, revenue, .c_acctbal, .n_name, .c_address, .c_phone, .c_comment)
+}

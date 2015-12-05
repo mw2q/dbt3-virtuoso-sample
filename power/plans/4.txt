@@ -1,0 +1,63 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	o_orderpriority,
+	count(*) as order_count
+from
+	orders
+where
+	o_orderdate >= cast (''1997-09-01'' as date)
+	and o_orderdate < dateadd (''month'', 3, cast (''1997-09-01'' as date))
+	and exists (
+		select
+			*
+		from
+			lineitem
+		where
+			l_orderkey = o_orderkey
+			and l_commitdate < l_receiptdate
+	)
+group by
+	o_orderpriority
+order by
+	o_orderpriority;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+{ fork
+lineitem       4.1 rows(t3.l_commitdate, t3.l_receiptdate, t3.l_orderkey)
+ 
+END Node
+After test:
+      0: if (t3.l_commitdate < t3.l_receiptdate) then 4 else 5 unkn 5
+      4: BReturn 1
+      5: BReturn 0
+Distinct (t3.l_orderkey)
+ 
+After code:
+      0: l_orderkey :=  := artm t3.l_orderkey
+      4: BReturn 0
+Subquery Select(l_orderkey)
+orders unq      0.03 rows (.o_orderpriority)
+ inlined  o_orderkey = l_orderkey o_orderdate >= <tag 211 c 1997-09-01> < <tag 211 c 1997-12-01>
+Sort (.o_orderpriority) -> (inc)
+ 
+}
+group by read node  
+(.o_orderpriority, order_count)
+Sort (.o_orderpriority) -> (order_count)
+ 
+}
+Key from temp (.o_orderpriority, order_count)
+ 
+Select (.o_orderpriority, order_count)
+}

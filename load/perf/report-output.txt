@@ -1,0 +1,12 @@
+Can't annotate native_write_msr_safe:
+
+No vmlinux file with build id 3a52ecfb79f622685d1bfb12d441d2d9f0975ab2
+was found in the path.
+
+Please use:
+
+  perf buildid-cache -vu vmlinux
+
+or:
+
+  --vmlinux vmlinux

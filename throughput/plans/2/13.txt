@@ -1,0 +1,94 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	ps_partkey,
+	sum(ps_supplycost * ps_availqty) as value
+from
+	partsupp,
+	supplier,
+	nation
+where
+	ps_suppkey = s_suppkey
+	and s_nationkey = n_nationkey
+	and n_name = ''CHINA''
+group by
+	ps_partkey having
+		sum(ps_supplycost * ps_availqty) > (
+			select
+				sum(ps_supplycost * ps_availqty) * 0.0001000000
+			from
+				partsupp,
+				supplier,
+				nation
+			where
+				ps_suppkey = s_suppkey
+				and s_nationkey = n_nationkey
+				and n_name = ''CHINA''
+		)
+order by
+	value desc;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+ 
+Precode:
+      0: { 
+{ fork
+supplier         1 rows(.s_nationkey, .s_suppkey)
+ 
+nation unq      0.04 rows ()
+ inlined  n_nationkey = .s_nationkey n_name = <c CHINA>
+partsupp         1 rows(.ps_supplycost, .ps_availqty)
+ ps_suppkey = k_.s_suppkey
+ 
+After code:
+      0: temp := artm .ps_supplycost * .ps_availqty
+      4:  sum sumtempset no set_ctr
+      9: BReturn 0
+}
+ 
+After code:
+      0: temp := artm sum *  0.0001 
+      4: aggregate :=  := artm temp
+      8: BReturn 0
+Subquery Select(aggregate)
+}
+ 
+      8: BReturn 0
+{ fork
+{ fork
+supplier         1 rows(.s_nationkey, .s_suppkey)
+ 
+nation unq      0.04 rows ()
+ inlined  n_nationkey = .s_nationkey n_name = <c CHINA>
+partsupp         1 rows(.ps_partkey, .ps_supplycost, .ps_availqty)
+ ps_suppkey = k_.s_suppkey
+ 
+After code:
+      0: temp := artm .ps_supplycost * .ps_availqty
+      4: BReturn 0
+Sort (.ps_partkey) -> (temp, scalar)
+ 
+}
+group by read node  
+(.ps_partkey, value, scalar)
+END Node
+After test:
+      0: if (value > scalar) then 4 else 5 unkn 5
+      4: BReturn 1
+      5: BReturn 0
+Sort (value) -> (.ps_partkey)
+ 
+}
+Key from temp (.ps_partkey, value)
+ 
+Select (.ps_partkey, value)
+}

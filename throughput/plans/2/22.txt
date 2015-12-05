@@ -1,0 +1,112 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	cntrycode,
+	count(*) as numcust,
+	sum(c_acctbal) as totacctbal
+from
+	(
+		select
+			substring(c_phone, 1, 2) as cntrycode,
+			c_acctbal
+		from
+			customer
+		where
+			substring(c_phone, 1, 2) in
+				(''32'', ''27'', ''31'', ''19'', ''26'', ''15'', ''17'')
+			and c_acctbal > (
+				select
+					avg(c_acctbal)
+				from
+					customer
+				where
+					c_acctbal > 0.00
+					and substring(c_phone, 1, 2) in
+						(''32'', ''27'', ''31'', ''19'', ''26'', ''15'', ''17'')
+			)
+			and not exists (
+				select
+					*
+				from
+					orders
+				where
+					o_custkey = c_custkey
+			)
+	) as custsale
+group by
+	cntrycode
+order by
+	cntrycode;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+ 
+Precode:
+      0: { 
+{ fork
+customer      0.69 rows(t4.c_phone, t4.c_acctbal)
+ c_acctbal >  0 
+END Node
+After test:
+      0: substring := Call substring (t4.c_phone,  1 ,  2 )
+      5: one_of_these := Call one_of_these (substring, <c 32>, <c 27>, <c 31>, <c 19>, <c 26>, <c 15>, <c 17>)
+      10: if ( 0  < one_of_these) then 14 else 15 unkn 15
+      14: BReturn 1
+      15: BReturn 0
+ 
+After code:
+      0: isnotnull := Call isnotnull (t4.c_acctbal)
+      5:  sum countisnotnullset no set_ctr
+      10:  sum sumt4.c_acctbalset no set_ctr
+      15: BReturn 0
+}
+ 
+After code:
+      0: temp := artm sum / count
+      4: aggregate :=  := artm temp
+      8: BReturn 0
+Subquery Select(aggregate)
+}
+ 
+      8: BReturn 0
+{ fork
+{ fork
+customer      0.11 rows(t2.c_phone, t2.c_custkey, t2.c_acctbal)
+ c_acctbal > k_scalar
+END Node
+After test:
+      0: if ({ 
+orders   1.5e+03 rows()
+ o_custkey = k_t2.c_custkey
+Subquery Select( <none> )
+}
+) then 19 else 4 unkn 19
+      4: substring := Call substring (t2.c_phone,  1 ,  2 )
+      9: one_of_these := Call one_of_these (substring, <c 32>, <c 27>, <c 31>, <c 19>, <c 26>, <c 15>, <c 17>)
+      14: if ( 0  < one_of_these) then 18 else 19 unkn 19
+      18: BReturn 1
+      19: BReturn 0
+ 
+Precode:
+      0: cntrycode := Call substring (t2.c_phone,  1 ,  2 )
+      5: BReturn 0
+Sort (cntrycode) -> (t2.c_acctbal, inc)
+ 
+}
+group by read node  
+(cntrycode, totacctbal, numcust)
+Sort (cntrycode) -> (numcust, totacctbal)
+ 
+}
+Key from temp (cntrycode, numcust, totacctbal)
+ 
+Select (cntrycode, numcust, totacctbal)
+}

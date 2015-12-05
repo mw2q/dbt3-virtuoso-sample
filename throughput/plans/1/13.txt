@@ -1,0 +1,84 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	p_brand,
+	p_type,
+	p_size,
+	count(distinct ps_suppkey) as supplier_cnt
+from
+	partsupp,
+	part
+where
+	p_partkey = ps_partkey
+	and p_brand <> ''Brand#22''
+	and p_type not like ''STANDARD POLISHED%''
+	and p_size in (6, 39, 28, 18, 40, 50, 5, 30)
+	and ps_suppkey not in (
+		select
+			s_suppkey
+		from
+			supplier
+		where
+			s_comment like ''%Customer%Complaints%''
+	)
+group by
+	p_brand,
+	p_type,
+	p_size
+order by
+	supplier_cnt desc,
+	p_brand,
+	p_type,
+	p_size;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ hash filler
+partsupp       0.8 rows(.ps_suppkey, .ps_partkey)
+ 
+END Node
+After test:
+      0: if ({ 
+supplier unq         1 rows ()
+ inlined  s_suppkey = k_.ps_suppkey s_comment LIKE <c %Customer%Complaints%>
+Subquery Select( <none> )
+}
+) then 5 else 4 unkn 5
+      4: BReturn 1
+      5: BReturn 0
+Sort hf 49 (.ps_partkey) -> (.ps_suppkey)
+ 
+}
+{ fork
+{ fork
+part        23 rows(.p_size, .p_brand, .p_type, .p_partkey)
+ 
+hash partition+bloom by 53 ()
+END Node
+After test:
+      0: if (.p_brand = <c Brand#22>) then 18 else 4 unkn 18
+      4: if (.p_type  LIKE  <c STANDARD POLISHED%>) then 18 else 8 unkn 18
+      8: one_of_these := Call one_of_these (.p_size,  6 ,  39 ,  28 ,  18 ,  40 ,  50 ,  5 ,  30 )
+      13: if ( 0  < one_of_these) then 17 else 18 unkn 18
+      17: BReturn 1
+      18: BReturn 0
+Hash source 49           1 rows(k_.p_partkey) -> (.ps_suppkey)
+Sort (.p_brand, .p_type, .p_size) -> (inc)
+ 
+}
+group by read node  
+(.p_brand, .p_type, .p_size, supplier_cnt)
+Sort (supplier_cnt, .p_brand, .p_type, .p_size)
+}
+Key from temp (.p_brand, .p_type, .p_size, supplier_cnt)
+ 
+Select (.p_brand, .p_type, .p_size, supplier_cnt)
+}

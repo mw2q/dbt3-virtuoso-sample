@@ -1,0 +1,73 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	n_name,
+	sum(l_extendedprice * (1 - l_discount)) as revenue
+from
+	customer,
+	orders,
+	lineitem,
+	supplier,
+	nation,
+	region
+where
+	c_custkey = o_custkey
+	and l_orderkey = o_orderkey
+	and l_suppkey = s_suppkey
+	and c_nationkey = s_nationkey
+	and s_nationkey = n_nationkey
+	and n_regionkey = r_regionkey
+	and r_name = ''ASIA''
+	and o_orderdate >= cast (''1995-01-01'' as date)
+	and o_orderdate < dateadd(''year'', 1, cast (''1995-01-01'' as date))
+group by
+	n_name
+order by
+	revenue desc;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ hash filler
+region         1 rows(.r_regionkey)
+ r_name = <c ASIA>
+Sort hf 34 (.r_regionkey)
+}
+{ fork
+{ fork
+nation        25 rows(.n_regionkey, .n_nationkey, .n_name)
+ 
+hash partition+bloom by 38 (tmp)hash join merged always card       0.2 -> ()
+Hash source 34 merged into ts        0.2 rows(.n_regionkey) -> ()
+supplier     0.042 rows(.s_nationkey, .s_suppkey)
+ s_nationkey = .n_nationkey
+customer         1 rows(.c_custkey)
+ c_nationkey = .s_nationkey
+orders   2.2e+02 rows(.o_orderkey)
+ o_orderdate >= <tag 211 c 1995-01-01> < <tag 211 c 1996-01-01> ,  o_custkey = .c_custkey
+lineitem       5.6 rows(.l_extendedprice, .l_discount)
+ inlined  l_orderkey = .o_orderkey l_suppkey = k_.s_suppkey
+ 
+After code:
+      0: temp := artm  1  - .l_discount
+      4: temp := artm .l_extendedprice * temp
+      8: BReturn 0
+Sort (.n_name) -> (temp)
+ 
+}
+group by read node  
+(.n_name, revenue)
+Sort (revenue) -> (.n_name)
+ 
+}
+Key from temp (.n_name, revenue)
+ 
+Select (.n_name, revenue)
+}

@@ -1,0 +1,79 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+          c_count,
+          count(*) as custdist
+  from (
+          select
+                  c_custkey,
+                  count(o_orderkey) as c_count
+          from
+                  (select * from customer
+                  left outer join orders on
+                    c_custkey = o_custkey and
+                    o_comment not like ''%express%packages%'') c_customer
+          group by
+                  c_custkey
+          ) c_orders
+  group by
+          c_count
+  order by
+          custdist desc,
+          c_count desc;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+{ fork
+Subquery 27 
+{ 
+{ fork
+customer         1 rows(t3.c_custkey)
+ 
+outer {
+orders   1.5e+03 rows(t4.o_comment, t4.o_orderkey)
+ o_custkey = k_t3.c_custkey
+END Node
+After test:
+      0: if (t4.o_comment  LIKE  <c %express%packages%>) then 5 else 4 unkn 5
+      4: BReturn 1
+      5: BReturn 0
+ end of outer}
+set_ctr
+ out: (t4.o_orderkey, t4.o_comment)
+ shadow: (t4.o_orderkey, t4.o_comment)
+ 
+Precode:
+      0: isnotnull := Call isnotnull (t4.o_orderkey)
+      5: BReturn 0
+Sort (t3.c_custkey) -> (isnotnull)
+ 
+}
+group by read node  
+(t3.c_custkey, aggregate)
+ 
+After code:
+      0: c_custkey :=  := artm t3.c_custkey
+      4: c_count :=  := artm aggregate
+      8: BReturn 0
+Subquery Select(c_custkey, c_count)
+}
+Sort (c_count) -> (inc)
+ 
+}
+group by read node  
+(c_count, custdist)
+Sort (custdist, c_count)
+}
+Key from temp (c_count, custdist)
+ 
+Select (c_count, custdist)
+}

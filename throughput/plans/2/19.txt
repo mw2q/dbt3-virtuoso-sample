@@ -1,0 +1,45 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	sum(l_extendedprice * l_discount) as revenue
+from
+	lineitem
+where
+	l_shipdate >= cast (''1996-01-01'' as date)
+	and l_shipdate < dateadd (''year'', 1, cast (''1996-01-01'' as date))
+	and l_discount between 0.02 - 0.01 and 0.02 + 0.01
+	and l_quantity < 25;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+END Node
+After test:
+      0: temp := artm  0.02  +  0.01 
+      4: temp := artm  0.02  -  0.01 
+      8: if (temp >= temp) then 12 else 13 unkn 13
+      12: BReturn 1
+      13: BReturn 0
+ 
+Precode:
+      0: temp := artm  0.02  -  0.01 
+      4: temp := artm  0.02  +  0.01 
+      8: BReturn 0
+lineitem     0.038 rows(.l_extendedprice, .l_discount)
+ l_quantity <  25  ,  l_discount >= cast <= cast ,  l_shipdate >= <tag 211 c 1996-01-01> < <tag 211 c 1997-01-01>
+ 
+After code:
+      0: temp := artm .l_extendedprice * .l_discount
+      4:  sum revenuetempset no set_ctr
+      9: BReturn 0
+}
+Select (revenue)
+}

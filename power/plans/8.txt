@@ -1,0 +1,105 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+	o_year,
+	sum(case
+		when nation = ''ETHIOPIA'' then volume
+		else 0
+	end) / sum(volume) as mkt_share
+from
+	(
+		select
+			extract(year from o_orderdate) as o_year,
+			l_extendedprice * (1 - l_discount) as volume,
+			n2.n_name as nation
+		from
+			part,
+			supplier,
+			lineitem,
+			orders,
+			customer,
+			nation n1,
+			nation n2,
+			region
+		where
+			p_partkey = l_partkey
+			and s_suppkey = l_suppkey
+			and l_orderkey = o_orderkey
+			and o_custkey = c_custkey
+			and c_nationkey = n1.n_nationkey
+			and n1.n_regionkey = r_regionkey
+			and r_name = ''AFRICA''
+			and s_nationkey = n2.n_nationkey
+			and o_orderdate between cast (''1995-01-01'' as date) and cast (''1996-12-31'' as date)
+			and p_type = ''LARGE BURNISHED STEEL''
+	) as all_nations
+group by
+	o_year
+order by
+	o_year;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ hash filler
+lineitem         6 rows(t4.l_orderkey, t4.l_partkey, t4.l_suppkey, t4.l_extendedprice, t4.l_discount)
+ 
+Sort hf 38 (t4.l_orderkey) -> (t4.l_discount, t4.l_extendedprice, t4.l_suppkey, t4.l_partkey)
+ 
+}
+{ fork
+{ fork
+orders         1 rows(t5.o_orderkey, t5.o_custkey, t5.o_orderdate)
+ o_orderdate >= <tag 211 c 1995-01-01> <= <tag 211 c 1996-12-31>
+hash partition+bloom by 42 ()
+Hash source 38          -6 rows(t5.o_orderkey) -> (t4.l_discount, t4.l_extendedprice, t4.l_suppkey, t4.l_partkey)
+ 
+Precode:
+      0: o_year := Call __extract (<c year>, t5.o_orderdate)
+      5: temp := artm  1  - t4.l_discount
+      9: temp := artm t4.l_extendedprice * temp
+      13: BReturn 0
+supplier unq         1 rows (t3.s_nationkey)
+ inlined  s_suppkey = t4.l_suppkey
+customer unq        -1 rows (t6.c_nationkey)
+ inlined  c_custkey = k_t5.o_custkey
+nation unq         1 rows (t7.n_regionkey)
+ inlined  n_nationkey = t6.c_nationkey
+region unq       0.2 rows ()
+ inlined  r_regionkey = t7.n_regionkey r_name = <c AFRICA>
+part unq         1 rows ()
+ inlined  p_partkey = k_t4.l_partkey p_type = <c LARGE BURNISHED STEEL>
+nation unq         1 rows (t8.n_name)
+ inlined  n_nationkey = k_t3.s_nationkey
+ 
+After code:
+      0: if (t8.n_name = <c ETHIOPIA>) then 4 else 17 unkn 17
+      4: temp := artm  1  - t4.l_discount
+      8: temp := artm t4.l_extendedprice * temp
+      12: callretSearchedCASE :=  := artm temp
+      16: Jump 21 (level=0)
+      17: callretSearchedCASE :=  := artm  0 
+      21: BReturn 0
+Sort (o_year) -> (temp, callretSearchedCASE)
+ 
+}
+group by read node  
+(o_year, aggregate, aggregate)
+ 
+Precode:
+      0: mkt_share := artm aggregate / aggregate
+      4: BReturn 0
+Sort (o_year) -> (mkt_share)
+ 
+}
+Key from temp (o_year, mkt_share)
+ 
+Select (o_year, mkt_share)
+}

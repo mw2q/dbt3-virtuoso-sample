@@ -1,0 +1,4 @@
+
+power = 19122.08
+throughput = 13251.43
+composite = 15918.38

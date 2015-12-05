@@ -1,0 +1,35 @@
+
+-- Line 6: SET AUTOCOMMIT MANUAL
+
+-- Line 10:
+select
+	l_returnflag,
+	l_linestatus,
+	sum(l_quantity) as sum_qty,
+	sum(l_extendedprice) as sum_base_price,
+	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+	avg(l_quantity) as avg_qty,
+	avg(l_extendedprice) as avg_price,
+	avg(l_discount) as avg_disc,
+	count(*) as count_order
+from
+	lineitem
+where
+	l_shipdate <= dateadd('DAY', -88, cast ('1998-12-01' as date))
+group by
+	l_returnflag,
+	l_linestatus
+order by
+	l_returnflag,
+	l_linestatus
+l_returnflag      l_linestatus      sum_qty                    sum_base_price             sum_disc_price             sum_charge                 avg_qty                    avg_price                  avg_disc                   count_order
+VARCHAR NOT NULL  VARCHAR NOT NULL  DOUBLE PRECISION NOT NULL  DOUBLE PRECISION NOT NULL  DOUBLE PRECISION NOT NULL  DOUBLE PRECISION NOT NULL  DOUBLE PRECISION NOT NULL  DOUBLE PRECISION NOT NULL  DOUBLE PRECISION NOT NULL  INTEGER NOT NULL
+_______________________________________________________________________________
+
+A                 F                                     76958               116210798.83             110303113.6321          114656378.6851448          25.56744186046512          38608.23881395347        0.04996013289036558  3010
+N                 F                                      1931                 2950777.14          2818033.036400001          2930236.070832002          23.26506024096386          35551.53180722891        0.04638554216867469  83
+N                 O                                    145141          217371994.5499999          206502269.4997001          214815539.4062404          25.38317593564183          38015.38904337179        0.04984784889821611  5718
+R                 F                                     74223          111932284.0800001          106303049.3082997          110685570.5743302          25.53250773993808          38504.39768833852        0.05069143446852417  2907
+
+-- Line 31: COMMIT WORK

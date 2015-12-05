@@ -1,0 +1,60 @@
+
+-- Line 1:
+explain('
+
+
+
+
+select
+    TOP 10
+    	l_orderkey,
+	sum(l_extendedprice * (1 - l_discount)) as revenue,
+	o_orderdate,
+	o_shippriority
+from
+	customer,
+	orders,
+	lineitem
+where
+	c_mktsegment = ''AUTOMOBILE''
+	and c_custkey = o_custkey
+	and l_orderkey = o_orderkey
+	and o_orderdate < cast (''1995-03-16'' as date)
+	and l_shipdate > cast (''1995-03-16'' as date)
+group by
+	l_orderkey,
+	o_orderdate,
+	o_shippriority
+order by
+	revenue desc,
+	o_orderdate;
+')
+REPORT
+VARCHAR
+_______________________________________________________________________________
+
+{ 
+{ fork
+{ fork
+customer         1 rows(.c_custkey)
+ c_mktsegment = <c AUTOMOBILE>
+orders   2.3e+02 rows(.o_orderkey, .o_orderdate, .o_shippriority)
+ o_orderdate < <tag 211 c 1995-03-16> ,  o_custkey = .c_custkey
+lineitem       2.8 rows(.l_orderkey, .l_extendedprice, .l_discount)
+ inlined  l_orderkey = .o_orderkey l_shipdate > <tag 211 c 1995-03-16>
+ 
+After code:
+      0: temp := artm  1  - .l_discount
+      4: temp := artm .l_extendedprice * temp
+      8: BReturn 0
+Sort (.l_orderkey, .o_orderdate, .o_shippriority) -> (temp)
+ 
+}
+group by read node  
+(.l_orderkey, .o_orderdate, .o_shippriority, revenue)
+Sort (revenue, .o_orderdate) -> (.l_orderkey, .o_shippriority)
+ 
+}
+top order by read (.l_orderkey, revenue, .o_orderdate, .o_shippriority)
+Select (.l_orderkey, revenue, .o_orderdate, .o_shippriority)
+}
